@@ -581,7 +581,7 @@
         const turned = turn >= 0.999;
 
         leftRod.style.transform = `rotateX(${spinAngle}deg)`;
-        rightRod.style.transform = `translate(${hingeX}px, ${hingeY}px) rotateZ(${foldAngle}deg) rotateX(${-spinAngle}deg)`;
+        rightRod.style.transform = `translate(${hingeX}px, ${hingeY}px) rotateZ(${foldAngle}deg) rotateX(${spinAngle}deg)`;
         const controlX = hingeX + 44;
         flexLoopPath.setAttribute("d", `M 0 0 C ${controlX} 0 ${controlX} ${hingeY} ${hingeX} ${hingeY}`);
         flexJoint.classList.toggle("bending", folded > 0.01);
