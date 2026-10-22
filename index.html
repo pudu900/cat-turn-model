@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>小猫空中转向：双截棍模型</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101723;
+      --panel: #192434;
+      --ink: #f2f6fc;
+      --muted: #9aabc0;
+      --outer: #ff9d62;
+      --inner: #61d6d1;
+      --accent: #c0a6ff;
+      --rod-length: 250px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 35%, #243349 0%, var(--bg) 72%);
+      color: var(--ink);
+      font: 15px/1.55 system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    main { width: min(1000px, 100%); margin: 0 auto; padding: 28px 22px 34px; }
+    header { margin: 0 auto 18px; max-width: 760px; text-align: center; }
+    h1 { margin: 0 0 8px; font-size: clamp(23px, 4vw, 34px); letter-spacing: .02em; }
+    header p { margin: 0; color: var(--muted); }
+    .scene {
+      position: relative;
+      height: min(56vw, 460px);
+      min-height: 310px;
+      overflow: hidden;
+      border: 1px solid #34445a;
+      border-radius: 18px;
+      background:
+        linear-gradient(#ffffff08 1px, transparent 1px),
+        linear-gradient(90deg, #ffffff08 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 52%, #34445a 0%, #1a2637 48%, #141e2c 100%);
+      background-size: 36px 36px, 36px 36px, auto;
+      box-shadow: 0 20px 60px #0005, inset 0 0 60px #0003;
+      perspective: 1000px;
+    }
+    .scene::after {
+      content: "";
+      position: absolute;
+      left: 13%; right: 13%; bottom: 17%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #9cb0c455, transparent);
+    }
+    .stage-label {
+      position: absolute;
+      top: 18px; left: 20px;
+      z-index: 3;
+      padding: 7px 12px;
+      border: 1px solid #ffffff20;
+      border-radius: 999px;
+      background: #111a27bb;
+      color: #dce7f5;
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+    }
+    .legend {
+      position: absolute;
+      right: 20px; top: 18px; z-index: 3;
+      display: flex; gap: 13px;
+      color: #dce7f5; font-size: 12px;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 11px; height: 11px; border-radius: 3px; }
+    .world {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      transform-style: preserve-3d;
+    }
+    .assembly {
+      position: relative;
+      width: 0; height: 0;
+      transform-style: preserve-3d;
+      transform: rotateX(-6deg) rotateY(-8deg);
+    }
+    .rod {
+      position: absolute;
+      top: -22px;
+      width: var(--rod-length); height: 44px;
+      transform-style: preserve-3d;
+      --rod-radius: 22px;
+    }
+    .rod.left { right: 0; transform-origin: right center; }
+    .rod.right { left: 0; transform-origin: left center; }
+    .cylinder-face {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: calc(50% - 5.7px);
+      left: 0;
+      width: var(--rod-length);
+      height: 11.4px;
+      border: 1px solid #ffffff35;
+      color: #17202b;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-shadow: 0 1px #ffffff75;
+      backface-visibility: hidden;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px #0003;
+    }
+    .cylinder-face.outer {
+      background: linear-gradient(180deg, #ffc18f, var(--outer) 60%, #dd774b);
+    }
+    .cylinder-face.inner {
+      background: linear-gradient(180deg, #a0f0e8, var(--inner) 60%, #36aaa9);
+    }
+    .cylinder-face.seam {
+      background: linear-gradient(180deg, #958b7d, #6e665e 60%, #514b45);
+    }
+    .cylinder-face span { pointer-events: none; }
+    .rod.right .cylinder-face span { transform: rotateY(180deg); }
+    .cylinder-cap {
+      position: absolute;
+      top: 0;
+      width: 44px;
+      height: 44px;
+      border: 1px solid #ffffff55;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #a99b88, #665d55 72%);
+      backface-visibility: hidden;
+    }
+    .cylinder-cap.start { left: -22px; transform: rotateY(-90deg); }
+    .cylinder-cap.end { right: -22px; transform: rotateY(90deg); }
+    .flex-joint {
+      position: absolute;
+      z-index: 4;
+      left: -15px; top: -23px;
+      width: 30px; height: 46px;
+      border: 2px solid #d4c2ff;
+      border-radius: 11px;
+      background: linear-gradient(90deg, #493765, #aa8be1 28%, #7655b6 52%, #bd9cff 76%, #493765);
+      box-shadow: 0 0 0 3px #ffffff12, 0 0 12px #b99cff99, 0 5px 12px #0008;
+      transform: translateZ(31px);
+      transition: border-radius .15s, width .15s, left .15s;
+    }
+    .flex-joint::before, .flex-joint::after {
+      content: "";
+      position: absolute;
+      top: 4px; bottom: 4px;
+      width: 2px;
+      border-radius: 2px;
+      background: #eaddffb8;
+      box-shadow: 0 0 4px #eaddff;
+    }
+    .flex-joint::before { left: 8px; }
+    .flex-joint::after { right: 8px; }
+    .flex-joint-label {
+      position: absolute;
+      left: 50%;
+      top: -32px;
+      padding: 3px 8px;
+      border: 1px solid #c7b3ff;
+      border-radius: 999px;
+      background: #231d38eF;
+      color: #f2ebff;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 0 12px #a889ff66;
+      transform: translateX(-50%);
+    }
+    .flex-joint.bending {
+      width: 40px;
+      left: -20px;
+      border-radius: 15px 8px 15px 8px;
+    }
+    .flex-joint.bending .flex-joint-label { opacity: 0; }
+    .flex-joint.hidden { opacity: 0; }
+    .flex-loop {
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      top: 0;
+      width: 100px;
+      height: 80px;
+      overflow: visible;
+      pointer-events: none;
+      filter: drop-shadow(0 0 7px #b99cff99);
+    }
+    .flex-loop path {
+      fill: none;
+      stroke: #b99cff;
+      stroke-width: 12px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .phase-cue {
+      position: absolute;
+      left: 50%;
+      top: calc(50% - 92px);
+      z-index: 4;
+      padding: 5px 10px;
+      border: 1px solid #ffd19a;
+      border-radius: 999px;
+      background: #382a20ee;
+      color: #ffe0bd;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-50%);
+    }
+    .phase-cue.show { opacity: 1; }
+    .fold-section {
+      width: min(520px, 100%);
+      margin: 12px auto 0;
+      padding: 9px 11px 10px;
+      border: 1px solid #a78bfa88;
+      border-radius: 11px;
+      background: #111a27eF;
+      box-shadow: 0 8px 24px #0006;
+      display: none;
+    }
+    .fold-section.show { display: block; }
+    .fold-section-title {
+      margin-bottom: 7px;
+      color: #e7ddff;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .fold-section-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: #cbd7e7;
+      font-size: 10px;
+    }
+    .fold-section-note {
+      margin-top: 7px;
+      color: #b6c4d7;
+      font-size: 11px;
+      text-align: center;
+    }
+    .contact-callout {
+      position: absolute;
+      right: 16px;
+      bottom: 54px;
+      z-index: 4;
+      display: none;
+      padding: 7px 10px;
+      border: 1px solid #ffc18f;
+      border-radius: 9px;
+      background: #111a27ed;
+      box-shadow: 0 5px 16px #0007;
+      color: #ffe3c8;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .contact-callout.show { display: block; }
+    .contact-callout::before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      top: -20px;
+      width: 1px;
+      height: 18px;
+      background: #ffc18f;
+      box-shadow: 0 0 5px #ffc18f;
+    }
+    .contact-callout .face-a, .contact-callout .face-b { color: var(--outer); }
+    .fold-layers {
+      display: flex;
+      align-items: stretch;
+      min-height: 34px;
+      overflow: hidden;
+      border: 1px solid #ffffff55;
+      border-radius: 7px;
+    }
+    .fold-layer {
+      display: grid;
+      flex: 1 1 0;
+      place-items: center;
+      padding: 4px 3px;
+      color: #17202b;
+      font-size: 10px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .fold-layer.inner { background: linear-gradient(135deg, #a0f0e8, #36aaa9); }
+    .fold-layer.outer { background: linear-gradient(135deg, #ffc18f, #dd774b); }
+    .fold-contact-seam {
+      display: grid;
+      flex: 0 0 3px;
+      place-items: center;
+      background: #f4e9d8;
+      box-shadow: 0 0 7px #ffe2b2;
+    }
+    .fold-contact-seam.hidden {
+      background: #536174;
+      box-shadow: none;
+    }
+    .spin-axis {
+      position: absolute;
+      z-index: 5;
+      left: calc(-1 * var(--rod-length));
+      top: -2px;
+      width: var(--rod-length);
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e5d6ff, #bca0ff 15%, #f5ecff 50%, #a98aff 85%, #e5d6ff);
+      box-shadow: 0 0 6px #c4aaff, 0 0 16px #a889ff;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateZ(54px);
+    }
+    .spin-axis::before, .spin-axis::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      width: 10px;
+      height: 10px;
+      border: 2px solid #f1eaff;
+      border-radius: 50%;
+      background: #7257ad;
+      box-shadow: 0 0 8px #b99cff;
+    }
+    .spin-axis::before { left: -5px; }
+    .spin-axis::after { right: -5px; }
+    .spin-axis-label {
+      position: absolute;
+      left: 50%;
+      top: -34px;
+      padding: 3px 8px;
+      border: 1px solid #c7b3ff;
+      border-radius: 999px;
+      background: #231d38ef;
+      color: #f2ebff;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 0 12px #a889ff66;
+      transform: translateX(-50%);
+    }
+    .spin-axis.show { opacity: 1; }
+    .rotation-guides {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: none;
+      pointer-events: none;
+    }
+    .rotation-guides.show { display: block; }
+    .rotation-guide {
+      position: absolute;
+      top: 43%;
+      display: grid;
+      justify-items: center;
+      gap: 2px;
+      color: #f2ebff;
+      font-size: 10px;
+      font-weight: 800;
+      text-shadow: 0 1px 4px #111a27, 0 0 8px #111a27;
+      white-space: nowrap;
+    }
+    .rotation-guide.a { left: 18%; top: 26%; }
+    .rotation-guide.b { left: 18%; top: 40%; }
+    .rotation-guide.a span {
+      position: absolute;
+      bottom: 100%;
+      margin-bottom: 2px;
+    }
+    .rotation-guide.b span {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 16px);
+    }
+    .rotation-guide svg {
+      width: 48px;
+      height: 48px;
+      overflow: visible;
+      filter: drop-shadow(0 0 5px #b99cff);
+    }
+    .rotation-guide path {
+      fill: none;
+      stroke: #e5d6ff;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 60 16;
+      animation: orbit-flow .9s linear infinite;
+    }
+    .rotation-guide.b path { animation-direction: reverse; }
+    .rotation-guide polygon { fill: #fff; }
+    @keyframes orbit-flow { to { stroke-dashoffset: -76; } }
+    .card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin-top: 16px;
+      padding: 16px 18px;
+      border: 1px solid #34445a;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #1b2839, #172231);
+    }
+    .explanation strong { display: block; margin-bottom: 3px; color: #fff; font-size: 16px; }
+    .explanation p { margin: 0; color: var(--muted); }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: end; }
+    button {
+      padding: 9px 13px;
+      border: 1px solid #506078;
+      border-radius: 9px;
+      background: #26364b;
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { background: #344861; }
+    button.primary { border-color: #bba3ff; background: #7157b2; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .timeline { margin: 15px 2px 0; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .steps { display: flex; justify-content: space-between; margin-top: 1px; color: var(--muted); font-size: 11px; }
+    .note { margin: 13px 3px 0; color: #8394aa; font-size: 12px; text-align: center; }
+    @media (max-width: 600px) {
+      main { padding: 20px 12px; }
+      .scene { min-height: 290px; }
+      :root { --rod-length: 190px; }
+      .card { grid-template-columns: 1fr; }
+      .controls { justify-content: start; }
+      .legend { top: auto; bottom: 16px; left: 18px; right: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>小猫空中转向：双截棍模型</h1>
+      <p>A、B 两节由柔性材料连成一体：先向内对折，折叠时不绕棍身长轴翻面；之后再转动。</p>
+    </header>
+    <section class="scene" aria-label="双截棍模型三维动画">
+      <div class="stage-label" id="stageLabel">1 · 初始姿态</div>
+      <div class="legend" aria-label="颜色说明">
+        <span><i class="swatch" style="background:var(--outer)"></i>外侧</span>
+        <span><i class="swatch" style="background:var(--inner)"></i>内侧</span>
+        <span><i class="swatch" style="background:#bca0ff"></i>柔性连接</span>
+      </div>
+      <div class="world">
+        <div class="assembly" id="assembly">
+          <div class="rod left">
+            <div class="cylinder-cap start"></div><div class="cylinder-cap end"></div>
+          </div>
+          <div class="rod right" id="rightRod">
+            <div class="cylinder-cap start"></div><div class="cylinder-cap end"></div>
+          </div>
+          <svg class="flex-loop" id="flexLoop" viewBox="0 0 100 80" aria-hidden="true">
+            <path d="M 0 0 C 44 0 44 44 0 44"></path>
+          </svg>
+          <div class="flex-joint" id="flexJoint"><span class="flex-joint-label">柔性连接段</span></div>
+          <div class="spin-axis" id="spinAxis" aria-label="两节棍身方向的转轴"></div>
+        </div>
+      </div>
+      <div class="phase-cue" id="foldCue">向内弯折 · 不绕长轴自转</div>
+      <div class="contact-callout" id="contactCallout">
+        内侧接触处（被遮挡）：<span class="face-b">B 内侧</span> ║ <span class="face-a">A 内侧</span>
+      </div>
+      <div class="rotation-guides" id="rotationGuides" aria-hidden="true">
+        <div class="rotation-guide a">
+          <svg viewBox="0 0 48 48"><path d="M 9 25 A 15 15 0 1 1 25 39"/><polygon points="19,34 27,39 20,44"/></svg>
+          <span>A 绕长轴 ↺</span>
+        </div>
+        <div class="rotation-guide b">
+          <svg viewBox="0 0 48 48"><path d="M 9 25 A 15 15 0 1 1 25 39"/><polygon points="19,34 27,39 20,44"/></svg>
+          <span>B 绕长轴 ↻</span>
+        </div>
+      </div>
+    </section>
+    <div class="fold-section" id="foldSection" role="img" aria-label="折叠剖面：内侧B、外侧B与外侧A接触、内侧A">
+      <div class="fold-section-title">折叠剖面（从观察侧向背面）</div>
+      <div class="fold-section-labels"><span>观察者</span><span>背面</span></div>
+      <div class="fold-layers">
+        <div class="fold-layer inner">B · 内侧</div>
+        <div class="fold-layer outer">B · 外侧<br>接触面</div>
+        <div class="fold-contact-seam" aria-label="两片外侧面接触"></div>
+        <div class="fold-layer outer">A · 外侧<br>接触面</div>
+        <div class="fold-layer inner">A · 内侧</div>
+      </div>
+      <div class="fold-section-note">柔性中段绕外侧弯成 U 形，带 B 节绕开 A；折叠后两节内侧相贴，内侧仍分别属于 A、B。</div>
+    </div>
+    <section class="card">
+      <div class="explanation">
+        <strong id="explanationTitle">两节伸展，外侧面朝向观察者</strong>
+        <p id="explanationText">橙色标记外侧，青色标记内侧；紫色软连接表示 A、B 是一体的。</p>
+      </div>
+      <div class="controls">
+        <button class="primary" id="playButton" type="button">播放</button>
+        <button id="resetButton" type="button">重置</button>
+      </div>
+    </section>
+    <div class="timeline">
+      <input id="scrubber" type="range" min="0" max="1000" value="0" aria-label="动画进度">
+      <div class="steps"><span>伸直</span><span>向内对折</span><span>对折后反向转</span><span>伸直</span><span>完成</span></div>
+    </div>
+    <p class="note">示意假设没有外力和外力矩，形变由内部作用完成。棍身采用圆截面，折叠后两轴保持相切固定；向内对折时只绕中间柔性连接处的横向弯折轴改变两节夹角，不绕棍身长轴滚转；折叠完成后，两节才分别绕各自长轴反向旋转。动画规定姿态变化，不求解动力学，真实运动仍须满足总角动量守恒。</p>
+  </main>
+  <script>
+    (() => {
+      const assembly = document.getElementById("assembly");
+      const rightRod = document.getElementById("rightRod");
+      const stageLabel = document.getElementById("stageLabel");
+      const explanationTitle = document.getElementById("explanationTitle");
+      const explanationText = document.getElementById("explanationText");
+      const rotationGuides = document.getElementById("rotationGuides");
+      const spinAxis = document.getElementById("spinAxis");
+      const flexJoint = document.getElementById("flexJoint");
+      const flexLoop = document.getElementById("flexLoop");
+      const flexLoopPath = flexLoop.querySelector("path");
+      const foldCue = document.getElementById("foldCue");
+      const foldSection = document.getElementById("foldSection");
+      const contactCallout = document.getElementById("contactCallout");
+      const foldSectionTitle = foldSection.querySelector(".fold-section-title");
+      const foldLayers = foldSection.querySelector(".fold-layers");
+      const foldSectionNote = foldSection.querySelector(".fold-section-note");
+      const leftRod = document.querySelector(".rod.left");
+      const playButton = document.getElementById("playButton");
+      const resetButton = document.getElementById("resetButton");
+      const scrubber = document.getElementById("scrubber");
+      const duration = 9000;
+      let progress = 0;
+      let playing = false;
+      let lastTime = 0;
+      let frame = 0;
+      let turnedContactShown = false;
+
+      function buildCylinder(rod, identity) {
+        const sides = 12;
+        const radius = 22;
+        for (let index = 0; index < sides; index += 1) {
+          const angle = index * 360 / sides;
+          const inwardFacing = -Math.sin(angle * Math.PI / 180);
+          const surface = inwardFacing > 0.05 ? "inner" : inwardFacing < -0.05 ? "outer" : "seam";
+          const face = document.createElement("div");
+          face.className = `cylinder-face ${surface}`;
+          face.style.transform = `rotateX(${angle}deg) translateZ(${radius}px)`;
+          if (index === sides / 4 || index === sides * 3 / 4) {
+            const label = document.createElement("span");
+            label.textContent = `${index === sides / 4 ? "内侧" : "外侧"} · ${identity}`;
+            face.append(label);
+          }
+          rod.append(face);
+        }
+      }
+
+      buildCylinder(leftRod, "A");
+      buildCylinder(rightRod, "B");
+
+      const smooth = (t) => {
+        const x = Math.max(0, Math.min(1, t));
+        return x * x * (3 - 2 * x);
+      };
+      const section = (p, start, end) => smooth((p - start) / (end - start));
+
+      function render() {
+        const p = progress;
+        const fold = section(p, 0.08, 0.30);
+        const turn = section(p, 0.34, 0.68);
+        const unfold = section(p, 0.78, 0.94);
+        const folded = fold * (1 - unfold);
+        const spinAngle = 180 * turn;
+        const foldAngle = 180 * folded;
+        const foldRadians = foldAngle * Math.PI / 180;
+        const hingeX = 22 * Math.sin(foldRadians);
+        const hingeY = 22 * (1 - Math.cos(foldRadians));
+        const isSpinning = p >= 0.34 && p < 0.70;
+        const turned = turn >= 0.999;
+
+        leftRod.style.transform = `rotateX(${spinAngle}deg)`;
+        rightRod.style.transform = `translate(${hingeX}px, ${hingeY}px) rotateZ(${foldAngle}deg) rotateX(${-spinAngle}deg)`;
+        const controlX = hingeX + 44;
+        flexLoopPath.setAttribute("d", `M 0 0 C ${controlX} 0 ${controlX} ${hingeY} ${hingeX} ${hingeY}`);
+        flexJoint.classList.toggle("bending", folded > 0.01);
+        flexJoint.classList.toggle("hidden", folded > 0.01);
+        flexLoop.style.display = folded > 0.01 ? "block" : "none";
+        if (turned !== turnedContactShown) {
+          turnedContactShown = turned;
+          foldSectionTitle.textContent = turned
+            ? "转动后剖面（从观察侧向背面）"
+            : "折叠剖面（从观察侧向背面）";
+          foldLayers.replaceChildren();
+          const layers = turned
+            ? [
+              ["outer", ["外侧 B"]],
+              ["seam-hidden", []],
+              ["outer", ["外侧 A"]]
+              ]
+            : [
+                ["outer", ["B · 外侧"]],
+                ["inner", ["B · 内侧", "接触面"]],
+                ["seam", []],
+                ["inner", ["A · 内侧", "接触面"]],
+                ["outer", ["A · 外侧"]]
+              ];
+          for (const [side, lines] of layers) {
+            const layer = document.createElement("div");
+            if (side === "seam" || side === "seam-hidden") {
+              layer.className = `fold-contact-seam${side === "seam-hidden" ? " hidden" : ""}`;
+              layer.setAttribute("aria-label", turned ? "内部接触位置，被外侧遮挡" : "两片外侧面接触");
+            } else {
+              layer.className = `fold-layer ${side}`;
+              lines.forEach((line, index) => {
+                if (index > 0) layer.append(document.createElement("br"));
+                layer.append(document.createTextNode(line));
+              });
+            }
+            foldLayers.append(layer);
+          }
+          foldSectionNote.textContent = turned
+            ? "图中只显示外侧 A、B。内侧 A 与内侧 B 在中间贴合并被遮住；青色内侧面没有画出来，因为从观察方向看不到。"
+            : "柔性中段沿外侧弯成 U 形，带 B 节绕开 A；折叠后两节青色内侧相贴，表面身份没有互换。";
+          foldSection.setAttribute("aria-label", turned
+            ? "转动后示意：可见外侧B与外侧A，内侧A和内侧B在内部接触并被遮挡"
+            : "折叠剖面：外侧B、内侧B与内侧A接触、外侧A");
+          if (turned) {
+            contactCallout.replaceChildren(document.createTextNode("内侧 A、B 在内部贴合（被遮挡，不可见）"));
+          } else {
+            contactCallout.innerHTML = "内侧接触处（被遮挡）：<span class=\"face-b\">B 内侧</span> ║ <span class=\"face-a\">A 内侧</span>";
+          }
+        }
+
+        let stage, title, text;
+        if (p < 0.08) {
+          stage = "1 · 初始姿态";
+          title = "两节伸展，外侧面朝向观察者";
+          text = "橙色标记外侧，青色标记内侧；圆点表示两节的连接处。";
+        } else if (p < 0.34) {
+          stage = "2 · 向内弯折";
+          title = "按原来的方式向内折回";
+          text = "柔性中段沿外侧弯成 U 形，带 B 节绕开 A；折叠时 B 节沿弧线移动，不穿过 A。";
+        } else if (p < 0.78) {
+          stage = "3 · 两节反向自转";
+          title = "对折完成后，两节绕各自长轴反向转";
+          text = turned
+            ? "转动完成：内侧 A 与内侧 B 紧贴在双层内部，因此不可见；外侧 A、B 分别仍是橙色外侧。"
+            : "两节保持固定轴间距，分别绕各自长轴反向旋转；圆截面避免棱角互穿，转完内侧相贴并藏在里面。";
+        } else if (p < 0.96) {
+          stage = "4 · 逆折叠";
+          title = "反向旋转结束后伸直";
+          text = "B 节沿折叠的反向路径回到伸展状态；这一阶段不额外平移整组模型。";
+        } else {
+          stage = "5 · 转向完成";
+          title = "展开完成";
+          text = "两节重新伸直；橙色外侧与青色内侧的朝向变化清晰可见。";
+        }
+        stageLabel.textContent = stage;
+        explanationTitle.textContent = title;
+        explanationText.textContent = text;
+        rotationGuides.classList.toggle("show", isSpinning);
+        spinAxis.classList.toggle("show", isSpinning);
+        foldCue.classList.toggle("show", p >= 0.08 && p < 0.34);
+        const showContact = (p >= 0.30 && p < 0.34) || (turned && p >= 0.68 && p < 0.78);
+        foldSection.classList.toggle("show", showContact);
+        contactCallout.classList.toggle("show", showContact);
+        scrubber.value = String(Math.round(p * 1000));
+      }
+
+      function animate(time) {
+        if (!playing) return;
+        if (lastTime) progress = Math.min(1, progress + (time - lastTime) / duration);
+        lastTime = time;
+        render();
+        if (progress >= 1) {
+          playing = false;
+          lastTime = 0;
+          playButton.textContent = "重播";
+          return;
+        }
+        frame = requestAnimationFrame(animate);
+      }
+
+      playButton.addEventListener("click", () => {
+        if (playing) {
+          playing = false;
+          cancelAnimationFrame(frame);
+          lastTime = 0;
+          playButton.textContent = "继续";
+          return;
+        }
+        if (progress >= 1) progress = 0;
+        playing = true;
+        playButton.textContent = "暂停";
+        frame = requestAnimationFrame(animate);
+      });
+      resetButton.addEventListener("click", () => {
+        playing = false;
+        cancelAnimationFrame(frame);
+        lastTime = 0;
+        progress = 0;
+        playButton.textContent = "播放";
+        render();
+      });
+      scrubber.addEventListener("input", () => {
+        playing = false;
+        cancelAnimationFrame(frame);
+        lastTime = 0;
+        progress = Number(scrubber.value) / 1000;
+        playButton.textContent = progress >= 1 ? "重播" : "播放";
+        render();
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>
