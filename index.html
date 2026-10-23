@@ -97,28 +97,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      top: calc(50% - 5.7px);
       left: 0;
       width: var(--rod-length);
-      height: 11.4px;
-      border: 1px solid #ffffff35;
+      height: 7px;
+      top: 18.5px;
       color: #17202b;
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 800;
       letter-spacing: .08em;
-      text-shadow: 0 1px #ffffff75;
+      text-shadow: 0 1px #ffffff55;
       backface-visibility: hidden;
       white-space: nowrap;
-      box-shadow: 0 2px 4px #0003;
-    }
-    .cylinder-face.outer {
-      background: linear-gradient(180deg, #ffc18f, var(--outer) 60%, #dd774b);
-    }
-    .cylinder-face.inner {
-      background: linear-gradient(180deg, #a0f0e8, var(--inner) 60%, #36aaa9);
-    }
-    .cylinder-face.seam {
-      background: linear-gradient(180deg, #958b7d, #6e665e 60%, #514b45);
     }
     .cylinder-face span { pointer-events: none; }
     .rod.right .cylinder-face span { transform: rotateY(180deg); }
@@ -127,76 +116,73 @@
       top: 0;
       width: 44px;
       height: 44px;
-      border: 1px solid #ffffff55;
+      border: 1px solid #ffffff45;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #a99b88, #665d55 72%);
+      background: radial-gradient(circle at 35% 32%, #b4a58f, #6d635a 68%, #4a423b 100%);
+      box-shadow: inset 0 0 6px #0006;
       backface-visibility: hidden;
     }
     .cylinder-cap.start { left: -22px; transform: rotateY(-90deg); }
     .cylinder-cap.end { right: -22px; transform: rotateY(90deg); }
-    .flex-joint {
+    /* 卡箍：始终可见，标出柔性套管两端的位置 */
+    .clamp {
       position: absolute;
-      z-index: 4;
-      left: -15px; top: -23px;
-      width: 30px; height: 46px;
-      border: 2px solid #d4c2ff;
-      border-radius: 11px;
-      background: linear-gradient(90deg, #493765, #aa8be1 28%, #7655b6 52%, #bd9cff 76%, #493765);
-      box-shadow: 0 0 0 3px #ffffff12, 0 0 12px #b99cff99, 0 5px 12px #0008;
-      transform: translateZ(31px);
-      transition: border-radius .15s, width .15s, left .15s;
+      top: -1.5px;
+      width: 47px;
+      height: 47px;
+      border-radius: 50%;
+      border: 2.5px solid #b79cf0cc;
+      box-shadow: 0 0 7px #a889ff66, inset 0 0 6px #7a5fc033;
+      transform: rotateY(90deg);
+      pointer-events: none;
     }
-    .flex-joint::before, .flex-joint::after {
+    .rod.left .clamp { right: 14.5px; }
+    .rod.right .clamp { left: -14.5px; }
+    /* 柔性连接段：一串小段拼成的可弯套管 */
+    .hinge {
+      position: absolute;
+      left: 0; top: 0;
+      width: 0; height: 0;
+      transform-style: preserve-3d;
+    }
+    .hinge-seg {
+      position: absolute;
+      left: 0; top: 0;
+      height: 13px;
+      border-radius: 6px;
+      background: #a98ce6;
+      box-shadow: inset 0 1px 0 #ffffff44, 0 1px 3px #0008;
+      will-change: transform;
+    }
+    .spin-axis {
+      position: absolute;
+      z-index: 5;
+      left: calc(-1 * var(--rod-length));
+      top: -2px;
+      width: var(--rod-length);
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e5d6ff, #bca0ff 15%, #f5ecff 50%, #a98aff 85%, #e5d6ff);
+      box-shadow: 0 0 6px #c4aaff, 0 0 16px #a889ff;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateZ(54px);
+      transition: opacity .2s;
+    }
+    .spin-axis::before, .spin-axis::after {
       content: "";
       position: absolute;
-      top: 4px; bottom: 4px;
-      width: 2px;
-      border-radius: 2px;
-      background: #eaddffb8;
-      box-shadow: 0 0 4px #eaddff;
+      top: -4px;
+      width: 10px;
+      height: 10px;
+      border: 2px solid #f1eaff;
+      border-radius: 50%;
+      background: #7257ad;
+      box-shadow: 0 0 8px #b99cff;
     }
-    .flex-joint::before { left: 8px; }
-    .flex-joint::after { right: 8px; }
-    .flex-joint-label {
-      position: absolute;
-      left: 50%;
-      top: -32px;
-      padding: 3px 8px;
-      border: 1px solid #c7b3ff;
-      border-radius: 999px;
-      background: #231d38eF;
-      color: #f2ebff;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 0 12px #a889ff66;
-      transform: translateX(-50%);
-    }
-    .flex-joint.bending {
-      width: 40px;
-      left: -20px;
-      border-radius: 15px 8px 15px 8px;
-    }
-    .flex-joint.bending .flex-joint-label { opacity: 0; }
-    .flex-joint.hidden { opacity: 0; }
-    .flex-loop {
-      position: absolute;
-      z-index: 3;
-      left: 0;
-      top: 0;
-      width: 100px;
-      height: 80px;
-      overflow: visible;
-      pointer-events: none;
-      filter: drop-shadow(0 0 7px #b99cff99);
-    }
-    .flex-loop path {
-      fill: none;
-      stroke: #b99cff;
-      stroke-width: 12px;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+    .spin-axis::before { left: -5px; }
+    .spin-axis::after { right: -5px; }
+    .spin-axis.show { opacity: 1; }
     .phase-cue {
       position: absolute;
       left: 50%;
@@ -212,6 +198,7 @@
       white-space: nowrap;
       opacity: 0;
       transform: translateX(-50%);
+      transition: opacity .2s;
     }
     .phase-cue.show { opacity: 1; }
     .fold-section {
@@ -303,49 +290,6 @@
       background: #536174;
       box-shadow: none;
     }
-    .spin-axis {
-      position: absolute;
-      z-index: 5;
-      left: calc(-1 * var(--rod-length));
-      top: -2px;
-      width: var(--rod-length);
-      height: 4px;
-      border-radius: 4px;
-      background: linear-gradient(90deg, #e5d6ff, #bca0ff 15%, #f5ecff 50%, #a98aff 85%, #e5d6ff);
-      box-shadow: 0 0 6px #c4aaff, 0 0 16px #a889ff;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateZ(54px);
-    }
-    .spin-axis::before, .spin-axis::after {
-      content: "";
-      position: absolute;
-      top: -4px;
-      width: 10px;
-      height: 10px;
-      border: 2px solid #f1eaff;
-      border-radius: 50%;
-      background: #7257ad;
-      box-shadow: 0 0 8px #b99cff;
-    }
-    .spin-axis::before { left: -5px; }
-    .spin-axis::after { right: -5px; }
-    .spin-axis-label {
-      position: absolute;
-      left: 50%;
-      top: -34px;
-      padding: 3px 8px;
-      border: 1px solid #c7b3ff;
-      border-radius: 999px;
-      background: #231d38ef;
-      color: #f2ebff;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 0 12px #a889ff66;
-      transform: translateX(-50%);
-    }
-    .spin-axis.show { opacity: 1; }
     .rotation-guides {
       position: absolute;
       inset: 0;
@@ -453,16 +397,15 @@
       </div>
       <div class="world">
         <div class="assembly" id="assembly">
-          <div class="rod left">
+          <div class="rod left" id="leftRod">
             <div class="cylinder-cap start"></div><div class="cylinder-cap end"></div>
+            <div class="clamp"></div>
           </div>
           <div class="rod right" id="rightRod">
             <div class="cylinder-cap start"></div><div class="cylinder-cap end"></div>
+            <div class="clamp"></div>
           </div>
-          <svg class="flex-loop" id="flexLoop" viewBox="0 0 100 80" aria-hidden="true">
-            <path d="M 0 0 C 44 0 44 44 0 44"></path>
-          </svg>
-          <div class="flex-joint" id="flexJoint"><span class="flex-joint-label">柔性连接段</span></div>
+          <div class="hinge" id="hinge"></div>
           <div class="spin-axis" id="spinAxis" aria-label="两节棍身方向的转轴"></div>
         </div>
       </div>
@@ -496,7 +439,7 @@
     <section class="card">
       <div class="explanation">
         <strong id="explanationTitle">两节伸展，外侧面朝向观察者</strong>
-        <p id="explanationText">橙色标记外侧，青色标记内侧；紫色软连接表示 A、B 是一体的。</p>
+        <p id="explanationText">橙色标记外侧，青色标记内侧；紫色套管是两节之间的柔性连接段。</p>
       </div>
       <div class="controls">
         <button class="primary" id="playButton" type="button">播放</button>
@@ -513,58 +456,206 @@
     (() => {
       const assembly = document.getElementById("assembly");
       const rightRod = document.getElementById("rightRod");
+      const leftRod = document.getElementById("leftRod");
+      const hinge = document.getElementById("hinge");
       const stageLabel = document.getElementById("stageLabel");
       const explanationTitle = document.getElementById("explanationTitle");
       const explanationText = document.getElementById("explanationText");
       const rotationGuides = document.getElementById("rotationGuides");
       const spinAxis = document.getElementById("spinAxis");
-      const flexJoint = document.getElementById("flexJoint");
-      const flexLoop = document.getElementById("flexLoop");
-      const flexLoopPath = flexLoop.querySelector("path");
       const foldCue = document.getElementById("foldCue");
       const foldSection = document.getElementById("foldSection");
       const contactCallout = document.getElementById("contactCallout");
       const foldSectionTitle = foldSection.querySelector(".fold-section-title");
       const foldLayers = foldSection.querySelector(".fold-layers");
       const foldSectionNote = foldSection.querySelector(".fold-section-note");
-      const leftRod = document.querySelector(".rod.left");
       const playButton = document.getElementById("playButton");
       const resetButton = document.getElementById("resetButton");
       const scrubber = document.getElementById("scrubber");
-      const duration = 9000;
-      let progress = 0;
-      let playing = false;
-      let lastTime = 0;
-      let frame = 0;
-      let turnedContactShown = false;
 
+      const duration = 9000;
+      const RADIUS = 22;          // 棍身半径
+      const SIDES = 24;           // 圆柱侧面数（越多越圆）
+      const HINGE_SEGMENTS = 12;  // 柔性段分段数
+      const HINGE_THICK = 13;     // 柔性段粗细
+      const HINGE_INSET = 6;      // 柔性段末端伸进棍身的长度
+
+      // ---------- 颜色与光照 ----------
+      const C_OUTER = [255, 157, 98];
+      const C_INNER = [97, 214, 209];
+      const C_SEAM = [158, 146, 130];
+      const C_HINGE = [172, 142, 232];
+
+      const TILT_X = -6 * Math.PI / 180;
+      const TILT_Y = -8 * Math.PI / 180;
+      const LIGHT = normalize([-0.42, -0.74, 0.52]);
+
+      function normalize(v) {
+        const n = Math.hypot(v[0], v[1], v[2]) || 1;
+        return [v[0] / n, v[1] / n, v[2] / n];
+      }
+      function rotX(v, a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return [v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c];
+      }
+      function rotY(v, a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c];
+      }
+      function rotZ(v, a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return [v[0] * c - v[1] * s, v[0] * s + v[1] * c, v[2]];
+      }
+      function brightness(n) {
+        const d = Math.max(0, n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]);
+        return Math.min(1.22, 0.44 + 0.74 * d);
+      }
+      function rgb(c, k) {
+        return `rgb(${Math.min(255, Math.round(c[0] * k))},${Math.min(255, Math.round(c[1] * k))},${Math.min(255, Math.round(c[2] * k))})`;
+      }
+
+      // ---------- 圆柱侧面 ----------
       function buildCylinder(rod, identity) {
-        const sides = 12;
-        const radius = 22;
-        for (let index = 0; index < sides; index += 1) {
-          const angle = index * 360 / sides;
-          const inwardFacing = -Math.sin(angle * Math.PI / 180);
-          const surface = inwardFacing > 0.05 ? "inner" : inwardFacing < -0.05 ? "outer" : "seam";
+        const faces = [];
+        const height = 2 * Math.PI * RADIUS / SIDES * 1.35;
+        for (let index = 0; index < SIDES; index += 1) {
+          const angle = index * 360 / SIDES;
           const face = document.createElement("div");
-          face.className = `cylinder-face ${surface}`;
-          face.style.transform = `rotateX(${angle}deg) translateZ(${radius}px)`;
-          if (index === sides / 4 || index === sides * 3 / 4) {
+          face.className = "cylinder-face";
+          face.style.height = `${height.toFixed(2)}px`;
+          face.style.top = `${(RADIUS - height / 2).toFixed(2)}px`;
+          face.style.transform = `rotateX(${angle}deg) translateZ(${RADIUS}px)`;
+          const sin = Math.sin(angle * Math.PI / 180);
+          const base = Math.abs(sin) < 0.15 ? C_SEAM : sin > 0 ? C_OUTER : C_INNER;
+          if (index === SIDES / 4 || index === SIDES * 3 / 4) {
             const label = document.createElement("span");
-            label.textContent = `${index === sides / 4 ? "内侧" : "外侧"} · ${identity}`;
+            label.textContent = `${index === SIDES / 4 ? "外侧" : "内侧"} · ${identity}`;
             face.append(label);
           }
           rod.append(face);
+          faces.push({ el: face, angle: angle * Math.PI / 180, base });
+        }
+        return faces;
+      }
+
+      const leftFaces = buildCylinder(leftRod, "A");
+      const rightFaces = buildCylinder(rightRod, "B");
+
+      // ---------- 柔性连接段 ----------
+      const hingeSegs = [];
+      for (let i = 0; i < HINGE_SEGMENTS; i += 1) {
+        const seg = document.createElement("div");
+        seg.className = "hinge-seg";
+        hinge.append(seg);
+        hingeSegs.push(seg);
+      }
+
+      function solveHalfAngle(ratio) {
+        if (ratio >= 0.999999) return 1e-4;
+        let lo = 1e-4, hi = Math.PI;
+        for (let i = 0; i < 48; i += 1) {
+          const mid = (lo + hi) / 2;
+          if (Math.sin(mid) / mid > ratio) lo = mid; else hi = mid;
+        }
+        return (lo + hi) / 2;
+      }
+
+      function buildHingeCurve(p0, p1, bulge, length, segments) {
+        const dx = p1.x - p0.x, dy = p1.y - p0.y;
+        const chord = Math.hypot(dx, dy);
+        const len = Math.max(length, chord * 1.001);
+        const out = [];
+        if (chord < 1e-3) {
+          for (let i = 0; i < segments; i += 1) {
+            out.push({ x: p0.x, y: p0.y, angle: 0, len: len / segments });
+          }
+          return out;
+        }
+        const ratio = Math.min(chord / len, 0.999999);
+        const theta = solveHalfAngle(ratio);
+        const radius = chord / (2 * Math.sin(theta));
+        const mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+        const ux = dx / chord, uy = dy / chord;
+        let nx = -uy, ny = ux;
+        const bn = Math.hypot(bulge.x, bulge.y) || 1;
+        if (nx * bulge.x / bn + ny * bulge.y / bn < 0) { nx = -nx; ny = -ny; }
+        const h = Math.sqrt(Math.max(radius * radius - (chord / 2) ** 2, 0));
+        const cx = mx - nx * h, cy = my - ny * h;
+        const a0 = Math.atan2(p0.y - cy, p0.x - cx);
+        let da = Math.atan2(p1.y - cy, p1.x - cx) - a0;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        const midX = cx + radius * Math.cos(a0 + da / 2);
+        const midY = cy + radius * Math.sin(a0 + da / 2);
+        if ((midX - mx) * nx + (midY - my) * ny < 0) {
+          da = da > 0 ? da - 2 * Math.PI : da + 2 * Math.PI;
+        }
+        const step = len / segments;
+        for (let i = 0; i < segments; i += 1) {
+          const t = (i + 0.5) / segments;
+          const a = a0 + da * t;
+          const x = cx + radius * Math.cos(a);
+          const y = cy + radius * Math.sin(a);
+          const sign = Math.sign(da) || 1;
+          const tx = -Math.sin(a) * sign;
+          const ty = Math.cos(a) * sign;
+          out.push({ x, y, angle: Math.atan2(ty, tx), len: step });
+        }
+        return out;
+      }
+
+      function updateHinge(foldRad) {
+        const bx = RADIUS * Math.sin(foldRad);
+        const by = RADIUS * (1 - Math.cos(foldRad));
+        const p0 = { x: -HINGE_INSET, y: 0 };
+        const p1 = { x: bx + Math.cos(foldRad) * HINGE_INSET, y: by + Math.sin(foldRad) * HINGE_INSET };
+        // 鼓出方向：两节“身体”方向之和的反向
+        let sx = -(-1 + Math.cos(foldRad));
+        let sy = -(Math.sin(foldRad));
+        let n = Math.hypot(sx, sy);
+        if (n < 0.15) { sx = 0; sy = 1; n = 1; }
+        const chord = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+        const targetLen = Math.max(10 + 52 * (foldRad / Math.PI), chord * 1.03);
+        const segs = buildHingeCurve(p0, p1, { x: sx / n, y: sy / n }, targetLen, HINGE_SEGMENTS);
+        const width = Math.max(4, (targetLen / HINGE_SEGMENTS) * 1.55);
+        for (let i = 0; i < segs.length; i += 1) {
+          const s = segs[i];
+          const el = hingeSegs[i];
+          const ca = Math.cos(s.angle), sa = Math.sin(s.angle);
+          let nx = -sa, ny = ca;
+          if (ny > 0) { nx = -nx; ny = -ny; }
+          const k = 0.62 + 0.5 * Math.max(0, -ny);
+          el.style.width = `${width.toFixed(2)}px`;
+          el.style.transform = `translate(${(s.x - width / 2).toFixed(2)}px, ${(s.y - HINGE_THICK / 2).toFixed(2)}px) rotate(${(s.angle * 180 / Math.PI).toFixed(2)}deg)`;
+          el.style.backgroundColor = rgb(C_HINGE, k);
         }
       }
 
-      buildCylinder(leftRod, "A");
-      buildCylinder(rightRod, "B");
+      // ---------- 圆柱着色 ----------
+      function paintRod(faces, spinRad, foldRad, isB) {
+        for (let i = 0; i < faces.length; i += 1) {
+          const f = faces[i];
+          let n = [0, -Math.sin(f.angle), Math.cos(f.angle)];
+          n = rotX(n, spinRad);
+          if (isB) n = rotZ(n, foldRad);
+          n = rotX(n, TILT_X);
+          n = rotY(n, TILT_Y);
+          f.el.style.backgroundColor = rgb(f.base, brightness(n));
+        }
+      }
 
+      // ---------- 时间轴 ----------
       const smooth = (t) => {
         const x = Math.max(0, Math.min(1, t));
         return x * x * (3 - 2 * x);
       };
       const section = (p, start, end) => smooth((p - start) / (end - start));
+
+      let progress = 0;
+      let playing = false;
+      let lastTime = 0;
+      let frame = 0;
+      let turnedContactShown = false;
 
       function render() {
         const p = progress;
@@ -574,19 +665,21 @@
         const folded = fold * (1 - unfold);
         const spinAngle = 180 * turn;
         const foldAngle = 180 * folded;
-        const foldRadians = foldAngle * Math.PI / 180;
-        const hingeX = 22 * Math.sin(foldRadians);
-        const hingeY = 22 * (1 - Math.cos(foldRadians));
+        const foldRad = foldAngle * Math.PI / 180;
+        const spinRad = spinAngle * Math.PI / 180;
+        const hingeX = RADIUS * Math.sin(foldRad);
+        const hingeY = RADIUS * (1 - Math.cos(foldRad));
         const isSpinning = p >= 0.34 && p < 0.70;
         const turned = turn >= 0.999;
 
         leftRod.style.transform = `rotateX(${spinAngle}deg)`;
-        rightRod.style.transform = `translate(${hingeX}px, ${hingeY}px) rotateZ(${foldAngle}deg) rotateX(${spinAngle}deg)`;
-        const controlX = hingeX + 44;
-        flexLoopPath.setAttribute("d", `M 0 0 C ${controlX} 0 ${controlX} ${hingeY} ${hingeX} ${hingeY}`);
-        flexJoint.classList.toggle("bending", folded > 0.01);
-        flexJoint.classList.toggle("hidden", folded > 0.01);
-        flexLoop.style.display = folded > 0.01 ? "block" : "none";
+        rightRod.style.transform =
+          `translate(${hingeX.toFixed(2)}px, ${hingeY.toFixed(2)}px) rotateZ(${foldAngle.toFixed(2)}deg) rotateX(${spinAngle}deg)`;
+
+        paintRod(leftFaces, spinRad, 0, false);
+        paintRod(rightFaces, spinRad, foldRad, true);
+        updateHinge(foldRad);
+
         if (turned !== turnedContactShown) {
           turnedContactShown = turned;
           foldSectionTitle.textContent = turned
@@ -598,19 +691,19 @@
               ["outer", ["外侧 B"]],
               ["seam-hidden", []],
               ["outer", ["外侧 A"]]
-              ]
+            ]
             : [
-                ["outer", ["B · 外侧"]],
-                ["inner", ["B · 内侧", "接触面"]],
-                ["seam", []],
-                ["inner", ["A · 内侧", "接触面"]],
-                ["outer", ["A · 外侧"]]
-              ];
+              ["outer", ["B · 外侧"]],
+              ["inner", ["B · 内侧", "接触面"]],
+              ["seam", []],
+              ["inner", ["A · 内侧", "接触面"]],
+              ["outer", ["A · 外侧"]]
+            ];
           for (const [side, lines] of layers) {
             const layer = document.createElement("div");
             if (side === "seam" || side === "seam-hidden") {
               layer.className = `fold-contact-seam${side === "seam-hidden" ? " hidden" : ""}`;
-              layer.setAttribute("aria-label", turned ? "内部接触位置，被外侧遮挡" : "两片外侧面接触");
+              layer.setAttribute("aria-label", turned ? "内部接触位置，被外侧遮挡" : "两片内侧接触面");
             } else {
               layer.className = `fold-layer ${side}`;
               lines.forEach((line, index) => {
@@ -637,17 +730,17 @@
         if (p < 0.08) {
           stage = "1 · 初始姿态";
           title = "两节伸展，外侧面朝向观察者";
-          text = "橙色标记外侧，青色标记内侧；圆点表示两节的连接处。";
+          text = "橙色标记外侧，青色标记内侧；紫色套管是两节之间的柔性连接段。";
         } else if (p < 0.34) {
           stage = "2 · 向内弯折";
           title = "按原来的方式向内折回";
-          text = "柔性中段沿外侧弯成 U 形，带 B 节绕开 A；折叠时 B 节沿弧线移动，不穿过 A。";
+          text = "柔性套管被弯成 U 形，带 B 节绕开 A；B 节沿弧线移动，不穿过 A。";
         } else if (p < 0.78) {
           stage = "3 · 两节反向自转";
           title = "对折完成后，两节绕各自长轴反向转";
           text = turned
             ? "转动完成：内侧 A 与内侧 B 紧贴在双层内部，因此不可见；外侧 A、B 分别仍是橙色外侧。"
-            : "两节保持固定轴间距，分别绕各自长轴反向旋转；圆截面避免棱角互穿，转完内侧相贴并藏在里面。";
+            : "两节保持固定轴间距，分别绕各自长轴反向旋转；圆截面避免棱角互穿。";
         } else if (p < 0.96) {
           stage = "4 · 逆折叠";
           title = "反向旋转结束后伸直";
@@ -712,6 +805,13 @@
         playButton.textContent = progress >= 1 ? "重播" : "播放";
         render();
       });
+
+      // 支持 ?p=0.42 直接定位（方便截图/讲解）
+      const param = new URLSearchParams(location.search).get("p");
+      if (param !== null && !Number.isNaN(Number(param))) {
+        progress = Math.min(1, Math.max(0, Number(param)));
+        playButton.textContent = progress >= 1 ? "重播" : "播放";
+      }
       render();
     })();
   </script>
